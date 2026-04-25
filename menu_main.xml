@@ -1,0 +1,71 @@
+package com.example.celebrityhub.activities;
+
+import android.os.Bundle;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import android.view.Menu;
+import android.view.MenuItem;
+import androidx.appcompat.widget.SearchView;
+import androidx.core.app.ShareCompat;
+import com.example.celebrityhub.R;
+import com.example.celebrityhub.adapters.CelebrityAdapter;
+import com.example.celebrityhub.managers.CelebrityManager;
+
+public class MainActivity extends AppCompatActivity {
+
+    private RecyclerView recyclerView;
+    private CelebrityAdapter adapter;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        recyclerView = findViewById(R.id.rv_celebrities);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        // On connecte l'adapter avec la liste de notre Manager
+        adapter = new CelebrityAdapter(this, CelebrityManager.getInstance().getAll());
+        recyclerView.setAdapter(adapter);
+    }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+
+        // Configuration de la barre de recherche
+        MenuItem searchItem = menu.findItem(R.id.action_search_celeb);
+        SearchView searchView = (SearchView) searchItem.getActionView();
+
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                if (adapter != null) {
+                    adapter.getFilter().filter(newText);
+                }
+                return true;
+            }
+        });
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Configuration du bouton de partage
+        if (item.getItemId() == R.id.action_share_app) {
+            ShareCompat.IntentBuilder.from(this)
+                    .setType("text/plain")
+                    .setChooserTitle("Partager via")
+                    .setText("Découvrez cette superbe application de galerie de célébrités !")
+                    .startChooser();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+}

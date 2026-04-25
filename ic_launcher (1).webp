@@ -1,0 +1,11 @@
+package com.example.celebrityhub.interfaces;
+
+import java.util.List;
+
+public interface CrudOperation<T> {
+    boolean insert(T item);
+    boolean modify(T item);
+    boolean remove(T item);
+    T getById(int id);
+    List<T> getAll();
+}

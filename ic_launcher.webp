@@ -1,0 +1,130 @@
+package com.example.celebrityhub.adapters;
+
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Filter;
+import android.widget.Filterable;
+import android.widget.RatingBar;
+import android.widget.TextView;
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
+import com.bumptech.glide.Glide;
+import com.example.celebrityhub.R;
+import com.example.celebrityhub.models.Celebrity;
+import de.hdodenhof.circleimageview.CircleImageView;
+import java.util.ArrayList;
+import java.util.List;
+
+public class CelebrityAdapter extends RecyclerView.Adapter<CelebrityAdapter.ViewHolder> implements Filterable {
+    private List<Celebrity> originalList;
+    private List<Celebrity> filteredList;
+    private Context context;
+    private CustomFilter searchFilter;
+
+    public CelebrityAdapter(Context context, List<Celebrity> celebList) {
+        this.context = context;
+        this.originalList = celebList;
+        this.filteredList = new ArrayList<>(celebList);
+        this.searchFilter = new CustomFilter();
+    }
+
+    @NonNull
+    @Override
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(context).inflate(R.layout.item_celebrity, parent, false);
+        return new ViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        Celebrity currentCeleb = filteredList.get(position);
+
+        holder.name.setText(currentCeleb.getFullName());
+        holder.rating.setRating(currentCeleb.getEvaluation());
+
+        Glide.with(context)
+                .load(currentCeleb.getPhotoUrl())
+                .placeholder(R.drawable.ic_celeb)
+                .error(R.drawable.ic_celeb)
+                .into(holder.image);
+
+        // --- NOUVEAU CODE : Gestion du clic sur la ligne ---
+        holder.itemView.setOnClickListener(v -> {
+            // 1. Charger le design du popup
+            View popupView = LayoutInflater.from(context).inflate(R.layout.dialog_edit_rating, null);
+            CircleImageView dialogImg = popupView.findViewById(R.id.img_dialog_celeb);
+            RatingBar dialogRating = popupView.findViewById(R.id.rating_dialog_celeb);
+
+            // 2. Remplir le popup avec les infos de la star cliquée
+            dialogRating.setRating(currentCeleb.getEvaluation());
+            Glide.with(context).load(currentCeleb.getPhotoUrl()).into(dialogImg);
+
+            // 3. Créer et afficher la boîte de dialogue (AlertDialog)
+            new androidx.appcompat.app.AlertDialog.Builder(context)
+                    .setTitle("Évaluer " + currentCeleb.getFullName())
+                    .setView(popupView)
+                    .setPositiveButton("Mettre à jour", (dialog, which) -> {
+                        // Récupérer la nouvelle note et l'appliquer
+                        float newScore = dialogRating.getRating();
+                        currentCeleb.setEvaluation(newScore);
+
+                        // Rafraîchir uniquement cette ligne dans la liste
+                        notifyItemChanged(position);
+                    })
+                    .setNegativeButton("Annuler", null)
+                    .show();
+        });
+    }
+
+    @Override
+    public int getItemCount() {
+        return filteredList.size();
+    }
+
+    @Override
+    public Filter getFilter() {
+        return searchFilter;
+    }
+
+    public static class ViewHolder extends RecyclerView.ViewHolder {
+        CircleImageView image;
+        TextView name;
+        RatingBar rating;
+
+        public ViewHolder(@NonNull View itemView) {
+            super(itemView);
+            image = itemView.findViewById(R.id.img_profile);
+            name = itemView.findViewById(R.id.txt_celeb_name);
+            rating = itemView.findViewById(R.id.rating_celeb);
+        }
+    }
+
+    private class CustomFilter extends Filter {
+        @Override
+        protected FilterResults performFiltering(CharSequence constraint) {
+            List<Celebrity> tempFilteredList = new ArrayList<>();
+
+            if (constraint == null || constraint.length() == 0) {
+                tempFilteredList.addAll(originalList);
+            } else {
+                String filterPattern = constraint.toString().toLowerCase().trim();
+                for (Celebrity celeb : originalList) {
+                    if (celeb.getFullName().toLowerCase().contains(filterPattern)) {
+                        tempFilteredList.add(celeb);
+                    }
+                }
+            }
+            FilterResults results = new FilterResults();
+            results.values = tempFilteredList;
+            return results;
+        }
+
+        @Override
+        protected void publishResults(CharSequence constraint, FilterResults results) {
+            filteredList = (List<Celebrity>) results.values;
+            notifyDataSetChanged();
+        }
+    }
+}

@@ -1,0 +1,57 @@
+package com.example.celebrityhub.activities;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.animation.OvershootInterpolator;
+import android.widget.ImageView;
+import android.widget.TextView;
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.celebrityhub.R;
+
+public class WelcomeActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_welcome);
+
+        ImageView appLogo = findViewById(R.id.img_logo_splash);
+        TextView appTitle = findViewById(R.id.txt_splash_title);
+
+        // 1. Apparition majestueuse du logo avec rebond
+        appLogo.animate()
+                .scaleX(1f)
+                .scaleY(1f)
+                .alpha(1f)
+                .setDuration(1200)
+                .setInterpolator(new OvershootInterpolator()) // L'effet de rebond luxueux
+                .withEndAction(() -> {
+                    // 2. Effet "Flash de paparazzi" une fois apparu
+                    appLogo.animate().alpha(0.2f).setDuration(80).withEndAction(() ->
+                            appLogo.animate().alpha(1f).setDuration(100)
+                    );
+                });
+
+        // 3. Le texte glisse vers le haut comme un générique de film
+        appTitle.setTranslationY(50f);
+        appTitle.animate()
+                .translationY(0f)
+                .alpha(1f)
+                .setDuration(1000)
+                .setStartDelay(800); // Démarre en décalé pour suivre le logo
+
+        // 4. Redirection plus rapide (3.5s au lieu de 5s pour garder un rythme dynamique)
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            Intent intent = new Intent(WelcomeActivity.this, MainActivity.class);
+            startActivity(intent);
+
+            // Fondu cinématographique (Fade in / Fade out)
+            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+
+            finish();
+        }, 3500);
+    }
+}
